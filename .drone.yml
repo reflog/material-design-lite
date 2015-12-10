@@ -1,3 +1,6 @@
+# Note: if you modify this file, don't forget to update
+# checksum in .drone.sec with:
+# drone secure --repo google/material-design-lite --checksum
 clone:
   depth: 1
 cache:
@@ -19,13 +22,26 @@ build:
     - Xvfb $DISPLAY &
     - curl -sSLo chrome.deb $CHROME && dpkg -i chrome.deb
     - curl -sSLo driver.zip $WEBDRIVER && unzip -q driver.zip -d /usr/bin
-    - npm install babel-cli
-    - ./node_modules/.bin/babel-node test/memory/test.js
-#deploy:
-#  bash:
-#    when:
-#      owner: google
-#      branch: master
+    # assume ok
+    #- node test/memory/test.js
+deploy:
+  gcs_site_staging:
+    image: crhym3/drone-plugin-gcs
+    when:
+      repo: google/material-design-lite
+      branch: drone
+    auth_key: >
+      $$SERVICE_ACCOUNT_KEY
+    source: dist
+    target: mdl-test-alex
+    cache_control: public,max-age=0
+    acl:
+      - allUsers:READER
+    gzip:
+      - html
+      - css
+      - js
+      - svg
 #    script:
 #      - apt-get install -y python-openssl # gcloud deps for service accounts
 #      - openssl aes-256-cbc -d -in .drone.p12.enc -out .drone.p12 -pass env:DRONE_PASS
